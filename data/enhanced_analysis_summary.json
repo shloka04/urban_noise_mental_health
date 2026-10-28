@@ -1,0 +1,28 @@
+{
+  "dataset_size": 83,
+  "neighborhoods": 42,
+  "total_noise_complaints": 234932,
+  "avg_depression_prevalence": 11.562650602409636,
+  "correlations": {
+    "Raw Noise Count vs Depression": 0.16729816372540948,
+    "Noise Rate per 100k vs Depression": 0.11656589166909609
+  },
+  "model_performance": {
+    "Raw Noise Count": {
+      "r2": 0.02798867558589413,
+      "rmse": 3.835251900148662
+    },
+    "Population-Normalized Rate": {
+      "r2": 0.013587607100611798,
+      "rmse": 3.8635584901666054
+    },
+    "Multiple Features": {
+      "r2": 0.05699310530520252,
+      "rmse": 3.777597353231428
+    },
+    "Robust (Theil-Sen)": {
+      "r2": -0.05074178220633074,
+      "rmse": 3.9875508331659044
+    }
+  }
+}

@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+.DS_Store
+.ipynb_checkpoints/
+
+# large source extract, download from NYC Open Data
+data/311_complaint_level.csv
