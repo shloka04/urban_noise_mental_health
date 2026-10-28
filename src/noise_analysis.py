@@ -217,16 +217,17 @@ def enhanced_analysis():
     # not exist here and the index cannot be computed from it. Rather than substitute
     # a stand-in, the index is left undefined and every nocturnal result below is
     # skipped. To reproduce it, point COMPLAINT_LEVEL_CSV at the raw 311 download.
-    COMPLAINT_LEVEL_CSV = DATA_DIR / "311_complaint_level.csv"
-    if COMPLAINT_LEVEL_CSV.exists():
-        print("Computing Nocturnal Noise Index from complaint-level data...")
-        complaints = pd.read_csv(COMPLAINT_LEVEL_CSV, low_memory=False)
-        complaints['nocturnal_score'] = calculate_nocturnal_noise_index(complaints)
-        per_area = complaints.groupby('UHF42')['nocturnal_score'].sum()
+    NOCTURNAL_CSV = DATA_DIR / "nocturnal_index_by_uhf42.csv"
+    if NOCTURNAL_CSV.exists():
+        print("Loading Nocturnal Noise Index from complaint-level data...")
+        noct = pd.read_csv(NOCTURNAL_CSV)
+        per_area = noct.groupby('UHF42')['nocturnal_index'].sum()
         combined_data['nocturnal_index'] = combined_data['UHF42'].map(per_area)
-        HAS_NOCTURNAL = True
+        HAS_NOCTURNAL = combined_data['nocturnal_index'].notna().any()
+        if not HAS_NOCTURNAL:
+            print("  No neighbourhoods matched - skipping nocturnal results.")
     else:
-        print("Complaint-level 311 data not present - skipping the Nocturnal Noise Index.")
+        print("Nocturnal index not built yet - run src/build_nocturnal_index.py first.")
         combined_data['nocturnal_index'] = np.nan
         HAS_NOCTURNAL = False
     

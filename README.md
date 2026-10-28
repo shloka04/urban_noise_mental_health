@@ -45,7 +45,21 @@ Neither correlation is significant at α = 0.05 with 42 neighbourhoods. Reported
 
 Computing it needs **complaint-level** records with timestamps and complaint types. The dataset here is already aggregated to neighbourhood-year, so those columns don't exist and the index cannot be derived from it. The pipeline detects this and skips every nocturnal result rather than substituting anything.
 
-To compute it, download the 311 Service Requests extract from NYC Open Data, filter to noise complaints, save it as `data/311_complaint_level.csv`, and re-run. The script picks it up automatically and the nocturnal correlations, models and plots come back.
+To compute it:
+
+```bash
+curl -o data/311_complaint_level.csv \
+  "https://data.cityofnewyork.us/resource/erm2-nwe9.csv?\$select=created_date,complaint_type,latitude,longitude&\$where=starts_with(complaint_type,'Noise')&\$limit=2000000"
+
+pip install geopandas
+python src/build_nocturnal_index.py
+python src/noise_analysis.py
+```
+
+`build_nocturnal_index.py` assigns each complaint to a neighbourhood by point-in-polygon
+join against `data/UHF42.geo.json`, applies the hour and severity weights, and writes
+`data/nocturnal_index_by_uhf42.csv`. The analysis script picks that up automatically and
+the nocturnal correlations, models and plots come back.
 
 ## What's not here
 
