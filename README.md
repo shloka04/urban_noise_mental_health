@@ -63,7 +63,7 @@ the nocturnal correlations, models and plots come back.
 
 ## What's not here
 
-The raw 311 extract (118,062 noise complaints) is too large to commit and is freely available from NYC Open Data. `TimePeriods.json`, the DOHMH lookup mapping survey period IDs to calendar periods, isn't redistributed either; without it the analysis still runs and the period column keeps its raw IDs.
+The raw 311 complaint-level extract is too large to commit and is freely available from NYC Open Data, which is why `build_nocturnal_index.py` downloads it on demand rather than the repository carrying it. `TimePeriods.json`, the DOHMH lookup mapping survey period IDs to calendar periods, isn't redistributed either; without it the analysis still runs and the period column keeps its raw IDs.
 
 ## Sources
 
