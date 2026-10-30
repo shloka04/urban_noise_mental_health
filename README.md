@@ -62,7 +62,7 @@ python3 src/noise_analysis.py
 ```
 data/    complaint counts, depression prevalence, UHF42 boundaries, ZIP crosswalk
 src/     analysis pipeline and the nocturnal index builder
-paper/   published manuscript and report
+paper/   published manuscript
 ```
 
 The complaint-level 311 extract runs to millions of rows, so the builder downloads it on demand rather than the repository carrying it.

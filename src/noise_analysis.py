@@ -335,7 +335,7 @@ def enhanced_analysis():
     axes[1, 2].set_ylabel('Noise Rate per 100k')
     
     plt.tight_layout()
-    plt.savefig(DATA_DIR / "enhanced_analysis_plots.png", dpi=300, bbox_inches='tight')
+    plt.savefig(RESULTS_DIR / "enhanced_analysis_plots.png", dpi=300, bbox_inches='tight')
     plt.close()
     
     # Enhanced Modeling
@@ -452,14 +452,14 @@ def enhanced_analysis():
     plt.title('Multiple Features Model')
     
     plt.tight_layout()
-    plt.savefig(DATA_DIR / "model_comparison_plots.png", dpi=300, bbox_inches='tight')
+    plt.savefig(RESULTS_DIR / "model_comparison_plots.png", dpi=300, bbox_inches='tight')
     plt.close()
     
     # Save enhanced results
     print("\n=== Saving Enhanced Results ===")
     
     # Save enhanced dataset
-    combined_data.to_csv(DATA_DIR / "enhanced_combined_data.csv", index=False)
+    combined_data.to_csv(RESULTS_DIR / "enhanced_combined_data.csv", index=False)
     
     # Create summary statistics
     summary_stats = {
@@ -489,7 +489,7 @@ def enhanced_analysis():
             'rmse': float(np.sqrt(mean_squared_error(y, y_pred)))
         }
     
-    with open(DATA_DIR / "enhanced_analysis_summary.json", 'w') as f:
+    with open(RESULTS_DIR / "enhanced_analysis_summary.json", 'w') as f:
         json.dump(summary_stats, f, indent=2)
     
     print("Enhanced analysis completed successfully!")
