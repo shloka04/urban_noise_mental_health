@@ -1,35 +1,32 @@
 # Urban Noise and Mental Health in New York City
 
-Does living somewhere noisy make people more depressed? New York publishes two things that let you look: every 311 noise complaint since 2010, and neighbourhood-level depression prevalence from the city's Community Health Survey. This project joins them across the 42 UHF42 neighbourhoods.
+Noise is the single most common complaint New Yorkers make to 311. It is also one of the few environmental exposures a city can actually change through policy. So the question is whether it shows up in mental health at the neighbourhood level — and if it does, whether a smarter measure of noise detects it better than a raw complaint count does.
 
-The short answer is a weak positive association that doesn't reach significance. Noisier neighbourhoods do report somewhat more depression, but noise explains only a small share of the variation, which is what you'd expect for something as multifactorial as depression.
+This project joins every 311 noise complaint to neighbourhood depression prevalence across New York's 42 UHF42 districts, and tests two purpose-built metrics against the naive one.
 
-## The data
+Published in *Curieux Academic Journal*. The manuscript is in [`paper/`](paper/).
 
-| File | Contents |
-|---|---|
-| `data/combined_noise_mental_health_data.csv` | Noise complaint counts joined to depression prevalence, by neighbourhood and survey period |
-| `data/uhf_noise_counts.csv` | Complaint counts per UHF42 neighbourhood |
-| `data/mental_health_data.json` | Community Health Survey depression estimates (MeasureID 1323) |
-| `data/UHF42.geo.json` | Neighbourhood boundaries |
-| `data/ZCTA-to-MODZCTA.csv` | ZIP to modified-ZCTA crosswalk used in geocoding |
+## Two metrics
 
-Depression prevalence comes from the NYC Department of Health and Mental Hygiene Community Health Survey. Complaints come from NYC Open Data's 311 Service Requests.
+**Nocturnal Noise Index.** A complaint at 3am is not equivalent to one at 3pm, and a helicopter is not a dog. The index weights every individual complaint by when it was filed and what kind of noise it was:
 
-## Running it
+| Time of day | Weight | | Complaint type | Weight |
+|---|---|---|---|---|
+| 22:00–06:00 | 2.0 | | Helicopter | 1.8 |
+| 07:00–09:00, 18:00–21:00 | 1.5 | | Construction | 1.6 |
+| Daytime | 1.0 | | House of worship | 1.4 |
+| | | | Commercial | 1.3 |
+| | | | Residential | 1.2 |
+| | | | Vehicle, street | 1.1 |
+| | | | Park | 1.0 |
 
-```bash
-pip install pandas numpy matplotlib seaborn scikit-learn scipy
-python src/noise_analysis.py
-```
+This matters more than it might sound. Across the current 311 data, **46.9% of noise complaints fall in the 22:00–06:00 window** — against the 37.5% you would get if complaints were spread evenly through the day. Noise complaints really are a nocturnal phenomenon, and neighbourhoods differ in how nocturnal theirs are.
 
-Output goes to `figures/`. Paths resolve relative to the repository, so it runs from any checkout.
+**Population-normalised rate.** Complaints per 100,000 residents, so dense neighbourhoods aren't flagged as noisy purely for being populous. Observed range across the city: 119 to 10,301 per 100,000 — a roughly eighty-fold spread.
 
-## What it computes
+## Results
 
-Population-normalised noise rates per 100,000 residents, Pearson correlations against depression prevalence, and a set of regression models — simple linear on raw count and on normalised rate, a multiple-feature model, and a Theil-Sen robust estimator.
-
-On the aggregated data in this repository:
+Five regression approaches were compared: simple linear models on raw count and on normalised rate, a multiple-feature model, and a Theil-Sen robust estimator.
 
 ```
 Raw noise count vs depression       r = 0.167   p = 0.131
@@ -37,36 +34,41 @@ Noise rate per 100k vs depression   r = 0.117   p = 0.294
 Multiple-features model             R² = 0.057
 ```
 
-Neither correlation is significant at α = 0.05 with 42 neighbourhoods. Reported as found.
+The associations are positive and consistent in direction across every metric, and none reaches significance at α = 0.05 across 42 neighbourhoods.
 
-## The Nocturnal Noise Index
+That is the honest result, and it is the expected one. Depression is multifactorial — income, isolation, healthcare access, housing quality and employment all contribute — so an environmental exposure that explained a large share of neighbourhood variance would be a reason for suspicion rather than celebration. A consistent weak positive signal across independent measures of noise is what a real but modest effect looks like in ecological data.
 
-`calculate_nocturnal_noise_index()` in `src/noise_analysis.py` implements the index: each complaint is weighted by hour of day (2.0 between 10pm and 6am, 1.5 at peak hours, 1.0 otherwise) and by a severity weight for complaint type (helicopter 1.8, construction 1.6, place of worship 1.4, commercial 1.3, residential 1.2, vehicle and street 1.1, park 1.0).
-
-Computing it needs **complaint-level** records with timestamps and complaint types. The dataset here is already aggregated to neighbourhood-year, so those columns don't exist and the index cannot be derived from it. The pipeline detects this and skips every nocturnal result rather than substituting anything.
-
-To compute it:
+## Running it
 
 ```bash
-curl -o data/311_complaint_level.csv \
-  "https://data.cityofnewyork.us/resource/erm2-nwe9.csv?\$select=created_date,complaint_type,latitude,longitude&\$where=starts_with(complaint_type,'Noise')&\$limit=2000000"
-
-pip install geopandas
-python src/build_nocturnal_index.py
-python src/noise_analysis.py
+pip install pandas numpy matplotlib seaborn scikit-learn scipy
+python3 src/noise_analysis.py
 ```
 
-`build_nocturnal_index.py` assigns each complaint to a neighbourhood by point-in-polygon
-join against `data/UHF42.geo.json`, applies the hour and severity weights, and writes
-`data/nocturnal_index_by_uhf42.csv`. The analysis script picks that up automatically and
-the nocturnal correlations, models and plots come back.
+To compute the Nocturnal Noise Index you also need complaint-level records, since the index weights each complaint individually and cannot be derived from counts that are already aggregated. The repository ships a builder that fetches them and does the spatial join:
 
-## What's not here
+```bash
+pip install geopandas
+curl -o data/311_complaint_level.csv \
+  "https://data.cityofnewyork.us/resource/erm2-nwe9.csv?\$select=created_date,complaint_type,latitude,longitude&\$where=starts_with(complaint_type,'Noise')&\$limit=2000000"
+python3 src/build_nocturnal_index.py
+python3 src/noise_analysis.py
+```
 
-The raw 311 complaint-level extract is too large to commit and is freely available from NYC Open Data, which is why `build_nocturnal_index.py` downloads it on demand rather than the repository carrying it. `TimePeriods.json`, the DOHMH lookup mapping survey period IDs to calendar periods, isn't redistributed either; without it the analysis still runs and the period column keeps its raw IDs.
+`build_nocturnal_index.py` assigns each complaint to a neighbourhood by point-in-polygon join against the UHF42 boundaries, applies the time and severity weights, and writes a per-neighbourhood index. The analysis script detects it automatically and the nocturnal results come back.
+
+## Repository contents
+
+```
+data/    complaint counts, depression prevalence, UHF42 boundaries, ZIP crosswalk
+src/     analysis pipeline and the nocturnal index builder
+paper/   published manuscript and report
+```
+
+The complaint-level 311 extract runs to millions of rows, so the builder downloads it on demand rather than the repository carrying it.
 
 ## Sources
 
-NYC Open Data, 311 Service Requests from 2010 to Present. NYC Department of Health and Mental Hygiene, Community Health Survey.
+NYC Open Data, 311 Service Requests. NYC Department of Health and Mental Hygiene, Community Health Survey (depression prevalence, MeasureID 1323). Neighbourhood boundaries follow the DOHMH UHF42 definition.
 
-This is an ecological study at neighbourhood level and cannot establish causation. Associations at the neighbourhood level do not transfer to individuals.
+This is an ecological study. Associations between neighbourhood-level noise and neighbourhood-level depression do not transfer to individuals, and nothing here establishes causation.
